@@ -2,11 +2,12 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import * as api from '../services/supabaseApi';
 import { StaffMember } from '../types';
-import { PencilSquareIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { PencilSquareIcon, MagnifyingGlassIcon, BoltIcon } from '@heroicons/react/24/outline';
 import { ExclamationTriangleIcon } from '@heroicons/react/24/solid';
 import EditStaffModal from '../components/EditStaffModal';
+import QuickEditModal from '../components/QuickEditModal'; // New Import
 import { isStandardRank } from '../utils/ranks';
-import StaffDetailsModal from '../components/StaffDetailsModal'; // New Import
+import StaffDetailsModal from '../components/StaffDetailsModal';
 
 const EditStaffRecord: React.FC = () => {
     const { user } = useAuth();
@@ -18,6 +19,7 @@ const EditStaffRecord: React.FC = () => {
     const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+    const [isQuickEditModalOpen, setIsQuickEditModalOpen] = useState(false); // New state
 
 
     const fetchAllStaff = useCallback(async () => {
@@ -65,6 +67,11 @@ const EditStaffRecord: React.FC = () => {
         setSelectedStaff(staff);
         setIsEditModalOpen(true);
     };
+    
+    const handleQuickEditClick = (staff: StaffMember) => {
+        setSelectedStaff(staff);
+        setIsQuickEditModalOpen(true);
+    };
 
     const handleViewClick = (staff: StaffMember) => {
         setSelectedStaff(staff);
@@ -77,6 +84,7 @@ const EditStaffRecord: React.FC = () => {
             await api.updateStaff(selectedStaff.id, staffUpdates);
             fetchAllStaff(); // Re-fetch to update the list
             setIsEditModalOpen(false);
+            setIsQuickEditModalOpen(false);
             alert('Record updated successfully!');
         } catch (error: any) {
             console.error("Failed to update staff record:", error);
@@ -139,13 +147,20 @@ const EditStaffRecord: React.FC = () => {
                                                 )}
                                             </div>
                                         </td>
-                                        <td className="px-6 py-4 text-right">
+                                        <td className="px-6 py-4 text-right space-x-2 whitespace-nowrap">
+                                            <button 
+                                                onClick={() => handleQuickEditClick(member)}
+                                                className="inline-flex items-center p-2 border border-transparent text-xs font-medium rounded-full text-white bg-yellow-500 hover:bg-yellow-600"
+                                                title="Quick Edit"
+                                            >
+                                                <BoltIcon className="h-4 w-4" />
+                                            </button>
                                             <button 
                                                 onClick={() => handleEditClick(member)}
                                                 className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
                                             >
                                                 <PencilSquareIcon className="h-4 w-4 mr-1.5" />
-                                                Edit Record
+                                                Edit Full Record
                                             </button>
                                         </td>
                                     </tr>
@@ -162,6 +177,12 @@ const EditStaffRecord: React.FC = () => {
                 )}
             </div>
             
+            <QuickEditModal
+                isOpen={isQuickEditModalOpen}
+                onClose={() => setIsQuickEditModalOpen(false)}
+                staffMember={selectedStaff}
+                onSave={handleSaveChanges}
+            />
             <EditStaffModal
                 isOpen={isEditModalOpen}
                 onClose={() => setIsEditModalOpen(false)}

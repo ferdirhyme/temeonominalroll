@@ -15,6 +15,58 @@ const getErrorMessage = (error: any, defaultMessage: string): string => {
     return defaultMessage;
 };
 
+// --- Authentication Functions ---
+
+export const requestPasswordReset = async (email: string): Promise<void> => {
+    const redirectTo = `${window.location.origin}/#/reset-password`;
+    // FIX: Use Supabase auth.resetPasswordForEmail, casting to `any` to bypass TypeScript errors.
+    const { error } = await (supabase.auth as any).resetPasswordForEmail(email, { redirectTo });
+    if (error) {
+        console.error("Error requesting password reset:", error);
+        // Provide a more user-friendly message for a common case.
+        if (error.message.includes('No user found')) {
+            throw new Error('No account found with that email address.');
+        }
+        throw new Error(getErrorMessage(error, 'Failed to send password reset email.'));
+    }
+};
+
+export const updateUserPassword = async (newPassword: string): Promise<void> => {
+    // This function is for an authenticated user, typically after a password recovery flow.
+    // FIX: Use Supabase auth.updateUser, casting to `any` to bypass TypeScript errors.
+    const { error } = await (supabase.auth as any).updateUser({ password: newPassword });
+    if (error) {
+        console.error("Error updating password:", error);
+        throw new Error(getErrorMessage(error, 'Failed to update password. Your session may have expired.'));
+    }
+};
+
+export const changeUserPassword = async (email: string, currentPassword: string, newPassword: string): Promise<void> => {
+    // Step 1: Re-authenticate to verify the current password. This also refreshes the session,
+    // which is a good security practice before sensitive operations.
+    const { error: signInError } = await (supabase.auth as any).signInWithPassword({
+        email,
+        password: currentPassword,
+    });
+
+    if (signInError) {
+        console.error("Re-authentication failed:", signInError);
+        // Provide a more specific error for incorrect password
+        if (signInError.message.includes('Invalid login credentials')) {
+            throw new Error('Your current password is incorrect.');
+        }
+        throw new Error(getErrorMessage(signInError, 'Failed to verify your current password.'));
+    }
+
+    // Step 2: If re-authentication is successful, update the password for the now-confirmed user.
+    const { error: updateError } = await (supabase.auth as any).updateUser({ password: newPassword });
+    
+    if (updateError) {
+        console.error("Error updating password:", updateError);
+        throw new Error(getErrorMessage(updateError, 'Failed to update your password. Please try again.'));
+    }
+};
+
 
 // Gets the start of the current month in 'YYYY-MM-01' format
 const getCurrentMonthStartDate = () => {
@@ -53,6 +105,7 @@ export const getStaffByEmiscode = async (emiscode: number): Promise<StaffMember[
         .from('ippd')
         .select('*')
         .eq('emiscode', emiscode)
+        .or('is_archived.is.false,is_archived.is.null')
         .order('name', { ascending: true });
 
     if (error) {
@@ -66,6 +119,7 @@ export const getAllStaffGlobally = async (): Promise<StaffMember[]> => {
     const { data, error } = await supabase
         .from('ippd')
         .select('*')
+        .or('is_archived.is.false,is_archived.is.null')
         .order('name', { ascending: true });
 
     if (error) {
@@ -100,7 +154,8 @@ export const getAllIppdStaff = async (
 
     let query = supabase
         .from('ippd')
-        .select('*');
+        .select('*')
+        .or('is_archived.is.false,is_archived.is.null');
 
     if (searchTerm) {
         // FIX: Optimized search to prevent timeouts.
@@ -290,6 +345,7 @@ export const findStaffInMasterList = async (staffId: string): Promise<StaffMembe
         .from('ippd')
         .select('*')
         .eq('staff_id', staffId)
+        .or('is_archived.is.false,is_archived.is.null')
         .single();
 
     if (error) {
@@ -327,12 +383,75 @@ export const pullStaffFromMasterList = async (
     return data;
 };
 
+// --- Staff Archiving Functions ---
+
+export const getArchivedStaffByEmiscode = async (emiscode: number): Promise<StaffMember[]> => {
+    const { data, error } = await supabase
+        .from('ippd')
+        .select('*')
+        .eq('emiscode', emiscode)
+        .is('is_archived', true)
+        .order('name', { ascending: true });
+
+    if (error) {
+        console.error("Error fetching archived staff by emiscode: ", error.message || JSON.stringify(error));
+        throw new Error(getErrorMessage(error, `Failed to fetch archived staff for emiscode ${emiscode}.`));
+    }
+    return data || [];
+};
+
+export const getAllArchivedStaffGlobally = async (): Promise<StaffMember[]> => {
+    const { data, error } = await supabase
+        .from('ippd')
+        .select('*')
+        .is('is_archived', true)
+        .order('name', { ascending: true });
+
+    if (error) {
+        console.error("Error fetching all archived staff globally: ", error.message || JSON.stringify(error));
+        throw new Error(getErrorMessage(error, 'Failed to fetch all archived staff.'));
+    }
+    return data || [];
+};
+
+export const archiveStaff = async (staffId: string): Promise<StaffMember> => {
+    const { data, error } = await supabase
+        .from('ippd')
+        .update({ is_archived: true })
+        .eq('id', staffId)
+        .select()
+        .single();
+    
+    if (error) {
+        console.error("Error archiving staff: ", error.message || JSON.stringify(error));
+        throw new Error(getErrorMessage(error, 'Failed to archive staff member.'));
+    }
+    return data;
+};
+
+export const unarchiveStaff = async (staffId: string): Promise<StaffMember> => {
+    const { data, error } = await supabase
+        .from('ippd')
+        .update({ is_archived: false })
+        .eq('id', staffId)
+        .select()
+        .single();
+    
+    if (error) {
+        console.error("Error un-archiving staff: ", error.message || JSON.stringify(error));
+        throw new Error(getErrorMessage(error, 'Failed to restore staff member from archive.'));
+    }
+    return data;
+};
+
+
 // --- Teacher Authorization Functions ---
 export const getIppdStaffByEmiscodeForAuth = async (emiscode: number): Promise<StaffMember[]> => {
     const { data, error } = await supabase
         .from('ippd')
         .select('*')
         .eq('emiscode', emiscode)
+        .or('is_archived.is.false,is_archived.is.null')
         .order('name', { ascending: true });
 
     if (error) {

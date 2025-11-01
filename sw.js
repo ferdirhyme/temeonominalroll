@@ -1,7 +1,4 @@
-const CACHE_NAME = 'staff-roll-cache-v1';
-// Add any other core assets you want to cache initially.
-// Note: URLs for external resources (like aistudiocdn) cannot be cached during install.
-// The fetch event will cache them on first load.
+const CACHE_NAME = 'staff-roll-cache-v3'; // Incremented cache version
 const urlsToCache = [
   '/',
   '/index.html',
@@ -20,43 +17,31 @@ self.addEventListener('install', event => {
   );
 });
 
-// Fetch event: serves requests from the cache first, falling back to the network.
-// This makes the app "offline-first".
+// Fetch event: implements a network-first, then cache fallback strategy.
 self.addEventListener('fetch', event => {
+  // We only apply this strategy to GET requests.
+  if (event.request.method !== 'GET') {
+    return;
+  }
+
   event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        // Cache hit - return response
-        if (response) {
-          return response;
-        }
-
-        // Clone the request because it's a stream and can only be consumed once.
-        const fetchRequest = event.request.clone();
-
-        return fetch(fetchRequest).then(
-          response => {
-            // Check if we received a valid response
-            if (!response || response.status !== 200 || response.type !== 'basic') {
-              // Also don't cache chrome-extension:// requests
-              if (!event.request.url.startsWith('http')) {
-                 return response;
-              }
-            }
-            
-            // Clone the response because it's a stream and can only be consumed once.
-            const responseToCache = response.clone();
-
-            caches.open(CACHE_NAME)
-              .then(cache => {
-                cache.put(event.request, responseToCache);
-              });
-
-            return response;
+    // Try to fetch from the network first.
+    fetch(event.request)
+      .then(networkResponse => {
+        // If we get a valid response, update the cache with the new version and return it.
+        const responseToCache = networkResponse.clone();
+        caches.open(CACHE_NAME).then(cache => {
+          if (networkResponse && networkResponse.status === 200 && event.request.url.startsWith('http')) {
+            cache.put(event.request, responseToCache);
           }
-        );
+        });
+        return networkResponse;
       })
-    );
+      .catch(() => {
+        // If the network request fails (e.g., offline), try to serve from the cache.
+        return caches.match(event.request);
+      })
+  );
 });
 
 // Activate event: cleans up old caches.
@@ -67,6 +52,7 @@ self.addEventListener('activate', event => {
       return Promise.all(
         cacheNames.map(cacheName => {
           if (cacheWhitelist.indexOf(cacheName) === -1) {
+            console.log('Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })

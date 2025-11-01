@@ -1,7 +1,5 @@
-
-
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ArrowRightIcon, UserIcon, LockClosedIcon } from '@heroicons/react/24/outline';
 
@@ -17,6 +15,9 @@ const Login: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const { login } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
+
+    const messageFromState = location.state?.message;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -45,6 +46,7 @@ const Login: React.FC = () => {
 
                 <div className="bg-white p-8 rounded-2xl shadow-xl">
                     <form className="space-y-6" onSubmit={handleSubmit}>
+                        {messageFromState && <div className="p-3 text-sm text-green-700 bg-green-100 rounded-lg border border-green-200">{messageFromState}</div>}
                         {error && <div className="p-3 text-sm text-red-700 bg-red-100 rounded-lg border border-red-200">{error}</div>}
                         
                         <div>
@@ -87,6 +89,14 @@ const Login: React.FC = () => {
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                 />
+                            </div>
+                        </div>
+
+                        <div className="flex items-center justify-end">
+                            <div className="text-sm">
+                                <Link to="/forgot-password" className="font-medium text-blue-600 hover:text-blue-500 hover:underline">
+                                    Forgot your password?
+                                </Link>
                             </div>
                         </div>
 

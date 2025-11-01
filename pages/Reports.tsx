@@ -15,6 +15,7 @@ import {
     TableCellsIcon,
     MagnifyingGlassIcon
 } from '@heroicons/react/24/solid';
+import ExportOptionsModal, { COLUMN_MAP, EXPORTABLE_COLUMNS } from '../components/ExportOptionsModal';
 
 type ReportType = 
     | 'metropolis-summary' 
@@ -81,6 +82,7 @@ const Reports: React.FC = () => {
     });
     const [searchTerm, setSearchTerm] = useState('');
     const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+    const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
     const fetchAllStaffData = useCallback(async () => {
         if (!user) return;
@@ -107,6 +109,24 @@ const Reports: React.FC = () => {
             clearTimeout(timerId);
         };
     }, [searchTerm]);
+
+    const customColumnMaps = useMemo(() => {
+        const nominalRollMap = {
+            ...COLUMN_MAP,
+            approval_status: 'Approval Status'
+        };
+
+        return {
+            'nominal-roll': {
+                map: nominalRollMap,
+                columns: [...EXPORTABLE_COLUMNS, 'approval_status']
+            },
+            'full-export': {
+                map: COLUMN_MAP,
+                columns: EXPORTABLE_COLUMNS as string[]
+            }
+        };
+    }, []);
 
     // Memoized calculations for each report
     const metropolisSummary = useMemo(() => {
@@ -277,7 +297,7 @@ const Reports: React.FC = () => {
         setActiveReport(reportType);
     };
 
-    const universalExport = (format: 'csv' | 'print') => {
+    const universalExport = (format: 'csv' | 'print', selectedColumns?: string[], passedColumnMap?: Record<string, string>) => {
         let headers: string[] = [];
         let dataRows: (string | number | undefined | null)[][] = [];
         let title = 'Report';
@@ -298,21 +318,29 @@ const Reports: React.FC = () => {
                     return [s.name, s.school, retirementDate.toLocaleDateString('en-GB')];
                 }) || [];
                 break;
-            case 'nominal-roll':
+            case 'nominal-roll': {
                 const selectedDate = new Date(nominalRollDate + '-02');
                 title = `Monthly Nominal Roll - ${selectedDate.toLocaleString('default', { month: 'long', year: 'numeric' })}`;
                 if(nominalRollData && nominalRollData.length > 0) {
-                    headers = [...Object.keys(nominalRollData[0])];
-                    dataRows = nominalRollData.map(row => headers.map(header => (row as any)[header]));
+                    const columnsToUse = selectedColumns || Object.keys(nominalRollData[0]);
+                    headers = selectedColumns && passedColumnMap 
+                        ? selectedColumns.map(c => passedColumnMap[c] || c) 
+                        : columnsToUse;
+                    dataRows = nominalRollData.map(row => columnsToUse.map(headerKey => (row as any)[headerKey]));
                 }
                 break;
-            case 'full-export':
+            }
+            case 'full-export': {
                  title = `Full Staff Export - ${reportDate}`;
                  if(allStaff.length > 0) {
-                    headers = [...Object.keys(allStaff[0])];
-                    dataRows = allStaff.map(row => headers.map(header => (row as any)[header]));
+                    const columnsToUse = selectedColumns || Object.keys(allStaff[0]);
+                    headers = selectedColumns && passedColumnMap 
+                        ? selectedColumns.map(c => passedColumnMap[c] || c) 
+                        : columnsToUse;
+                    dataRows = allStaff.map(row => columnsToUse.map(headerKey => (row as any)[headerKey]));
                  }
                  break;
+            }
             case 'data-audit':
                 title = 'Data Completeness Audit';
                 headers = ['Name', 'Staff ID', 'School', 'Missing Fields'];
@@ -320,7 +348,7 @@ const Reports: React.FC = () => {
                 break;
             // Non-tabular reports need special handling
             default:
-                alert("Export/Print is only available for tabular reports.");
+                alert("Export/Print is not available for this type of report.");
                 return;
         }
 
@@ -359,6 +387,24 @@ const Reports: React.FC = () => {
         }
     };
     
+    const handleExportRequest = (format: 'csv' | 'print') => {
+        const isSelectable = ['nominal-roll', 'full-export'].includes(activeReport || '');
+        const isExportable = ['metropolis-summary', 'retirement-forecast', 'data-audit', 'nominal-roll', 'full-export'].includes(activeReport || '');
+
+        if (isSelectable) {
+            setIsExportModalOpen(true);
+        } else if (isExportable) {
+            universalExport(format);
+        } else {
+            alert("Export/Print is not available for this report.");
+        }
+    };
+
+    const handleModalExport = (selectedColumns: string[], columnMap: Record<string, string>, format: 'csv' | 'print') => {
+        setIsExportModalOpen(false);
+        universalExport(format, selectedColumns, columnMap);
+    };
+
 // FIX: Refactored BarChart to resolve type errors in `reduce` and `sort` calls.
 // The component now safely filters and sorts data, and derives the max value
 // from the sorted data, making it more efficient and robust.
@@ -475,13 +521,13 @@ const BarChart: React.FC<{ data: Record<string, number>; title: string, color: s
                 {isExportable && (
                      <div className="flex space-x-2">
                         <button
-                            onClick={() => universalExport('print')}
+                            onClick={() => handleExportRequest('print')}
                             className="inline-flex items-center px-3 py-1.5 border border-gray-300 text-xs font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50"
                         >
                             <PrinterIcon className="h-4 w-4 mr-2" /> Print
                         </button>
                         <button
-                            onClick={() => universalExport('csv')}
+                            onClick={() => handleExportRequest('csv')}
                             className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700"
                         >
                             <DocumentArrowDownIcon className="h-4 w-4 mr-2" /> Export CSV
@@ -705,6 +751,7 @@ const BarChart: React.FC<{ data: Record<string, number>; title: string, color: s
     );
 
     const isSuperadmin = user?.role === UserRole.Superadmin;
+    const isSelectableExport = activeReport && ['nominal-roll', 'full-export'].includes(activeReport);
 
     return (
         <div className="space-y-8">
@@ -746,6 +793,17 @@ const BarChart: React.FC<{ data: Record<string, number>; title: string, color: s
                 <ReportActions />
                 <ReportDisplay />
             </div>
+
+            {isExportModalOpen && isSelectableExport && (
+                <ExportOptionsModal
+                    isOpen={isExportModalOpen}
+                    onClose={() => setIsExportModalOpen(false)}
+                    onExportCSV={(cols, map) => handleModalExport(cols, map, 'csv')}
+                    onExportPrint={(cols, map) => handleModalExport(cols, map, 'print')}
+                    columnMap={customColumnMaps[activeReport as 'nominal-roll' | 'full-export']?.map}
+                    exportableColumns={customColumnMaps[activeReport as 'nominal-roll' | 'full-export']?.columns}
+                />
+            )}
         </div>
     );
 };

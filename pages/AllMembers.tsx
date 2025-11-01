@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import * as api from '../services/supabaseApi';
-import { StaffMember } from '../types';
+import { StaffMember, UserRole } from '../types';
 import { useAuth } from '../context/AuthContext';
-import { MagnifyingGlassIcon, ArrowDownOnSquareStackIcon, ArrowUturnLeftIcon, CakeIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, ArrowDownOnSquareStackIcon, ArrowUturnLeftIcon, CakeIcon, ArrowDownTrayIcon, ArchiveBoxIcon } from '@heroicons/react/24/outline';
 import { ExclamationTriangleIcon } from '@heroicons/react/24/solid';
 import { isStandardRank } from '../utils/ranks';
 import StaffDetailsModal from '../components/StaffDetailsModal'; // New Import
@@ -38,6 +38,7 @@ const AllMembers: React.FC = () => {
     const [adminDetails, setAdminDetails] = useState<{ school: string; unit?: string; emiscode: number } | null>(null);
     const [pullHistory, setPullHistory] = useState<PullHistoryItem[]>([]);
     const [isConfirmingPull, setIsConfirmingPull] = useState(false);
+    const [isConfirmingArchive, setIsConfirmingArchive] = useState(false);
 
     // State for retirements
     const [retiringStaff, setRetiringStaff] = useState<StaffMember[]>([]);
@@ -158,6 +159,11 @@ const AllMembers: React.FC = () => {
         if (!selectedStaffForAction || !adminDetails) return;
         setIsConfirmingPull(true);
     };
+
+    const handleArchiveRequest = () => {
+        if (!selectedStaffForAction || !user) return;
+        setIsConfirmingArchive(true);
+    };
     
     const handleViewClick = (staff: StaffMember) => {
         setSelectedStaffForView(staff);
@@ -200,6 +206,25 @@ const AllMembers: React.FC = () => {
             await fetchData();
         } catch (err: any) {
             setError(`Failed to pull staff: ${err.message}`);
+        } finally {
+            setIsActionLoading(false);
+        }
+    };
+
+    const handleConfirmArchive = async () => {
+        if (!selectedStaffForAction) return;
+
+        setIsConfirmingArchive(false);
+        setIsActionLoading(true);
+        setError('');
+
+        try {
+            await api.archiveStaff(selectedStaffForAction.id);
+            alert(`${selectedStaffForAction.name} has been successfully archived.`);
+            setSelectedStaffForAction(null);
+            await fetchData(); // Refresh list
+        } catch (err: any) {
+            setError(`Failed to archive staff: ${err.message}`);
         } finally {
             setIsActionLoading(false);
         }
@@ -266,6 +291,7 @@ const AllMembers: React.FC = () => {
     };
 
     const isPullButtonDisabled = !selectedStaffForAction || isActionLoading || (selectedStaffForAction && adminDetails && selectedStaffForAction.emiscode === adminDetails.emiscode);
+    const isArchiveButtonDisabled = !selectedStaffForAction || isActionLoading || (user?.role === UserRole.Admin && selectedStaffForAction.emiscode !== user.emiscode) || (user && selectedStaffForAction && selectedStaffForAction.staff_id === user.staffId);
     
     const RetirementsSection = () => (
         <div className="bg-white p-6 rounded-xl shadow-lg">
@@ -322,100 +348,95 @@ const AllMembers: React.FC = () => {
     );
 
     const renderContent = () => {
-        if (loading && !isActionLoading) {
-            return (
-                <div className="flex justify-center items-center py-16">
-                    <div className="w-12 h-12 border-4 border-blue-600 border-dashed rounded-full animate-spin"></div>
-                </div>
-            );
-        }
-
         if (error) {
             return <p className="text-center text-red-600 py-8">{error}</p>;
         }
 
-        if (allStaff.length > 0) {
-            return (
-                <div className="relative">
-                    {isActionLoading && (
-                        <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10">
-                            <div className="w-8 h-8 border-4 border-blue-600 border-dashed rounded-full animate-spin"></div>
-                        </div>
-                    )}
-                    <div className="overflow-x-auto">
-                        <table className="min-w-full bg-white">
-                            <thead className="bg-gray-50">
-                                <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Select</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Staff ID</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rank</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">School</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Management Unit</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200">
-                                {allStaff.map((member) => (
-                                    <tr key={member.id} className={`hover:bg-gray-50 ${selectedStaffForAction?.id === member.id ? 'bg-blue-50' : ''}`}>
-                                        <td className="px-4 py-4">
-                                            <input
-                                                type="radio"
-                                                name="selectedStaff"
-                                                checked={selectedStaffForAction?.id === member.id}
-                                                onChange={() => setSelectedStaffForAction(member)}
-                                                className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
-                                            />
-                                        </td>
-                                        <td className="px-6 py-4 text-sm font-medium text-gray-900">
-                                            <span onClick={() => handleViewClick(member)} className="cursor-pointer hover:underline text-blue-600">
-                                                {member.name}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-sm text-gray-500">{member.staff_id}</td>
-                                        <td className="px-6 py-4 text-sm text-gray-500">
-                                            <div className="flex items-center">
-                                                <span>{member.rank || 'N/A'}</span>
-                                                {member.rank && !isStandardRank(member.rank) && (
-                                                    <span title="This rank is not standard. Please use the 'Edit Member Record' page to correct it.">
-                                                        <ExclamationTriangleIcon className="h-5 w-5 ml-2 text-yellow-500" />
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4 text-sm text-gray-500">{member.school}</td>
-                                        <td className="px-6 py-4 text-sm text-gray-500">{member.unit || 'N/A'}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                    <div className="flex justify-between items-center mt-4">
-                        <button
-                            onClick={() => setCurrentPage(p => p - 1)}
-                            disabled={currentPage === 0 || loading || isActionLoading}
-                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
-                        >
-                            Previous
-                        </button>
-                        <span className="text-sm text-gray-700">Page {currentPage + 1}</span>
-                        <button
-                            onClick={() => setCurrentPage(p => p + 1)}
-                            disabled={!hasNextPage || loading || isActionLoading}
-                            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
-                        >
-                            Next
-                        </button>
-                    </div>
-                </div>
-            );
-        }
-
         return (
-            <p className="text-center text-gray-500 py-8">
-                {debouncedSearchTerm
-                    ? 'No staff members found matching your search.'
-                    : 'No staff members found.'}
-            </p>
+            <div className="relative min-h-[400px]">
+                {(loading || isActionLoading) && (
+                    <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10 rounded-lg">
+                        <div className="w-12 h-12 border-4 border-blue-600 border-dashed rounded-full animate-spin"></div>
+                    </div>
+                )}
+                
+                {allStaff.length > 0 ? (
+                    <>
+                        <div className="overflow-x-auto">
+                            <table className="min-w-full bg-white">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Select</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Staff ID</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rank</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">School</th>
+                                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Management Unit</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200">
+                                    {allStaff.map((member) => (
+                                        <tr key={member.id} className={`hover:bg-gray-50 ${selectedStaffForAction?.id === member.id ? 'bg-blue-50' : ''}`}>
+                                            <td className="px-4 py-4">
+                                                <input
+                                                    type="radio"
+                                                    name="selectedStaff"
+                                                    checked={selectedStaffForAction?.id === member.id}
+                                                    onChange={() => setSelectedStaffForAction(member)}
+                                                    className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                                                />
+                                            </td>
+                                            <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                                                <span onClick={() => handleViewClick(member)} className="cursor-pointer hover:underline text-blue-600">
+                                                    {member.name}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-gray-500">{member.staff_id}</td>
+                                            <td className="px-6 py-4 text-sm text-gray-500">
+                                                <div className="flex items-center">
+                                                    <span>{member.rank || 'N/A'}</span>
+                                                    {member.rank && !isStandardRank(member.rank) && (
+                                                        <span title="This rank is not standard. Please use the 'Edit Member Record' page to correct it.">
+                                                            <ExclamationTriangleIcon className="h-5 w-5 ml-2 text-yellow-500" />
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-sm text-gray-500">{member.school}</td>
+                                            <td className="px-6 py-4 text-sm text-gray-500">{member.unit || 'N/A'}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div className="flex justify-between items-center mt-4">
+                            <button
+                                onClick={() => setCurrentPage(p => p - 1)}
+                                disabled={currentPage === 0 || loading || isActionLoading}
+                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+                            >
+                                Previous
+                            </button>
+                            <span className="text-sm text-gray-700">Page {currentPage + 1}</span>
+                            <button
+                                onClick={() => setCurrentPage(p => p + 1)}
+                                disabled={!hasNextPage || loading || isActionLoading}
+                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+                            >
+                                Next
+                            </button>
+                        </div>
+                    </>
+                ) : (
+                    !loading && (
+                        <p className="text-center text-gray-500 py-8">
+                            {debouncedSearchTerm
+                                ? 'No staff members found matching your search.'
+                                : 'No staff members found.'}
+                        </p>
+                    )
+                )}
+            </div>
         );
     };
 
@@ -440,14 +461,24 @@ const AllMembers: React.FC = () => {
                             className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 text-gray-900 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
                         />
                     </div>
-                    <button
-                        onClick={handlePullRequest}
-                        disabled={isPullButtonDisabled}
-                        className="w-full md:w-auto inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                    >
-                        <ArrowDownOnSquareStackIcon className="h-5 w-5 mr-2" />
-                        Pull Selected Staff
-                    </button>
+                    <div className="flex flex-wrap gap-2 justify-end">
+                        <button
+                            onClick={handlePullRequest}
+                            disabled={isPullButtonDisabled}
+                            className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                        >
+                            <ArrowDownOnSquareStackIcon className="h-5 w-5 mr-2" />
+                            Pull Selected Staff
+                        </button>
+                        <button
+                            onClick={handleArchiveRequest}
+                            disabled={isArchiveButtonDisabled}
+                            className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-yellow-600 hover:bg-yellow-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                        >
+                            <ArchiveBoxIcon className="h-5 w-5 mr-2" />
+                            Archive Selected Staff
+                        </button>
+                    </div>
                 </div>
 
                 {pullHistory.length > 0 && (
@@ -505,6 +536,39 @@ const AllMembers: React.FC = () => {
                                 className="px-6 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 disabled:bg-blue-400"
                             >
                                 {isActionLoading ? 'Pulling...' : 'Confirm Pull'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {isConfirmingArchive && selectedStaffForAction && (
+                 <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md text-center">
+                        <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                            <ExclamationTriangleIcon className="h-6 w-6 text-red-600" aria-hidden="true" />
+                        </div>
+                        <h3 className="text-lg font-semibold text-gray-900 mt-3">Confirm Staff Archive</h3>
+                        <p className="mt-4 text-gray-600">
+                            Are you sure you want to archive <strong className="font-bold">{selectedStaffForAction.name}</strong>?
+                        </p>
+                        <p className="text-sm text-gray-500 mt-2">
+                            This action will remove them from all active lists (dashboards, approvals, etc.). This should be used for staff who have retired, resigned, or otherwise permanently left the service. They can be restored later from the 'Archived Staff' page.
+                        </p>
+                        <div className="mt-6 flex justify-center space-x-4">
+                            <button
+                                onClick={() => setIsConfirmingArchive(false)}
+                                disabled={isActionLoading}
+                                className="px-6 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 disabled:opacity-50"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleConfirmArchive}
+                                disabled={isActionLoading}
+                                className="px-6 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 disabled:bg-red-400"
+                            >
+                                {isActionLoading ? 'Archiving...' : 'Confirm Archive'}
                             </button>
                         </div>
                     </div>

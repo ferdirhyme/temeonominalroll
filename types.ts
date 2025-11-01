@@ -78,6 +78,7 @@ export interface StaffMember {
     authorised: boolean;
     profile_image_url?: string;
     stafftype?: string;
+    is_archived?: boolean;
 }
 
 export interface StatusUpdate {

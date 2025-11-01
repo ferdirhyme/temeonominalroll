@@ -1,7 +1,7 @@
 import React from 'react';
 // FIX: Use named import for react-router-dom to resolve module export errors.
 import { NavLink } from 'react-router-dom';
-import { HomeIcon, UserPlusIcon, CheckBadgeIcon, ExclamationTriangleIcon, XMarkIcon, NoSymbolIcon, PencilSquareIcon, UsersIcon, ShieldCheckIcon, DocumentChartBarIcon, BuildingLibraryIcon } from '@heroicons/react/24/outline';
+import { HomeIcon, UserPlusIcon, CheckBadgeIcon, ExclamationTriangleIcon, XMarkIcon, NoSymbolIcon, PencilSquareIcon, UsersIcon, ShieldCheckIcon, DocumentChartBarIcon, BuildingLibraryIcon, ArchiveBoxIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../context/AuthContext';
 import { UserRole } from '../types';
 
@@ -44,6 +44,9 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
                     </NavLink>
                     <NavLink to="/all-members" className={({ isActive }) => `${navLinkClasses} ${isActive ? activeNavLinkClasses : ''}`}>
                         <UsersIcon className="h-6 w-6 mr-3" /> All Members
+                    </NavLink>
+                    <NavLink to="/archived-staff" className={({ isActive }) => `${navLinkClasses} ${isActive ? activeNavLinkClasses : ''}`}>
+                        <ArchiveBoxIcon className="h-6 w-6 mr-3" /> Archived Staff
                     </NavLink>
                     <NavLink to="/add-staff" className={({ isActive }) => `${navLinkClasses} ${isActive ? activeNavLinkClasses : ''}`}>
                         <UserPlusIcon className="h-6 w-6 mr-3" /> Add Staff

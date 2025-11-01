@@ -1,8 +1,3 @@
-
-
-
-
-
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import * as api from '../services/supabaseApi';
@@ -53,8 +48,8 @@ const TeacherDashboard: React.FC = () => {
 
     if (loading) {
         return (
-            <div className="flex justify-center items-center p-8">
-                <div className="w-10 h-10 border-4 border-blue-600 border-dashed rounded-full animate-spin"></div>
+            <div className="flex items-center justify-center min-h-[50vh]">
+                <div className="w-16 h-16 border-4 border-blue-600 border-dashed rounded-full animate-spin"></div>
             </div>
         );
     }

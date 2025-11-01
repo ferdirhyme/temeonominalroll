@@ -19,6 +19,10 @@ import AuthorizeTeachers from './pages/AuthorizeTeachers';
 import Unauthorized from './pages/Unauthorized';
 import Reports from './pages/Reports';
 import MetropolisView from './pages/MetropolisView';
+import ArchivedStaff from './pages/ArchivedStaff';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
+import ChangePassword from './pages/ChangePassword';
 
 
 const App: React.FC = () => {
@@ -57,6 +61,8 @@ const AppRouter: React.FC = () => {
             {/* Public routes for unauthenticated users, login is the primary entry point */}
             <Route path="/login" element={!user ? <Login /> : <Navigate to="/dashboard" />} />
             <Route path="/signup" element={!user ? <Signup /> : <Navigate to="/dashboard" />} />
+            <Route path="/forgot-password" element={!user ? <ForgotPassword /> : <Navigate to="/dashboard" />} />
+            <Route path="/reset-password" element={!user ? <ResetPassword /> : <Navigate to="/dashboard" />} />
 
             {/* Protected routes for authenticated users. All are nested under the Layout component. */}
             <Route element={user ? <Layout /> : <Navigate to="/login" />} >
@@ -68,6 +74,7 @@ const AppRouter: React.FC = () => {
                 <Route path="/disapproved-staff" element={(user?.role === UserRole.Admin || user?.role === UserRole.Superadmin) ? <DisapprovedStaff /> : <Navigate to="/dashboard" />} />
                 <Route path="/edit-staff-record" element={(user?.role === UserRole.Admin || user?.role === UserRole.Superadmin) ? <EditStaffRecord /> : <Navigate to="/dashboard" />} />
                 <Route path="/all-members" element={(user?.role === UserRole.Admin || user?.role === UserRole.Superadmin) ? <AllMembers /> : <Navigate to="/dashboard" />} />
+                <Route path="/archived-staff" element={(user?.role === UserRole.Admin || user?.role === UserRole.Superadmin) ? <ArchivedStaff /> : <Navigate to="/dashboard" />} />
                 <Route path="/add-staff" element={(user?.role === UserRole.Admin || user?.role === UserRole.Superadmin) ? <AddStaff /> : <Navigate to="/dashboard" />} />
                 <Route path="/authorize-teachers" element={(user?.role === UserRole.Admin || user?.role === UserRole.Superadmin) ? <AuthorizeTeachers /> : <Navigate to="/dashboard" />} />
                 <Route path="/reports" element={(user?.role === UserRole.Admin || user?.role === UserRole.Superadmin) ? <Reports /> : <Navigate to="/dashboard" />} />
@@ -75,6 +82,9 @@ const AppRouter: React.FC = () => {
 
                 {/* Teacher-only Routes */}
                 <Route path="/profile" element={user?.role === UserRole.Teacher ? <TeacherProfile /> : <Navigate to="/dashboard" />} />
+
+                {/* Routes for all authenticated users */}
+                <Route path="/change-password" element={<ChangePassword />} />
             </Route>
 
             {/* Root path and catch-all redirect to login or dashboard */}

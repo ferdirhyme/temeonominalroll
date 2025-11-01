@@ -1,14 +1,16 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { StaffMember } from '../types';
 
 interface ExportOptionsModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onExportCSV: (selectedColumns: (keyof StaffMember)[], columnMap: Record<keyof StaffMember, string>) => void;
-    onExportPrint: (selectedColumns: (keyof StaffMember)[], columnMap: Record<keyof StaffMember, string>) => void;
+    onExportCSV: (selectedColumns: string[], columnMap: Record<string, string>) => void;
+    onExportPrint: (selectedColumns: string[], columnMap: Record<string, string>) => void;
+    columnMap?: Record<string, string>;
+    exportableColumns?: string[];
 }
 
-const COLUMN_MAP: Record<keyof StaffMember, string> = {
+export const COLUMN_MAP: Record<keyof StaffMember, string> = {
     id: 'Row ID',
     staff_id: 'Staff ID',
     name: 'Name',
@@ -41,27 +43,42 @@ const COLUMN_MAP: Record<keyof StaffMember, string> = {
     date_posted_present_sta: 'Date Posted to Station',
     phone2: 'Phone 2',
     authorised: 'Authorised',
-    // FIX: Added missing 'profile_image_url' to satisfy the Record<keyof StaffMember, string> type.
     profile_image_url: 'Profile Image URL',
     stafftype: 'Staff Type',
+    is_archived: 'Is Archived',
 };
 
-const EXPORTABLE_COLUMNS = Object.keys(COLUMN_MAP).filter(
+export const EXPORTABLE_COLUMNS = Object.keys(COLUMN_MAP).filter(
     key => key !== 'id' && key !== 'authorised'
 ) as (keyof StaffMember)[];
 
 
-const ExportOptionsModal: React.FC<ExportOptionsModalProps> = ({ isOpen, onClose, onExportCSV, onExportPrint }) => {
-    const [selectedColumns, setSelectedColumns] = useState<(keyof StaffMember)[]>([]);
+const ExportOptionsModal: React.FC<ExportOptionsModalProps> = ({ 
+    isOpen, 
+    onClose, 
+    onExportCSV, 
+    onExportPrint,
+    columnMap: propColumnMap,
+    exportableColumns: propExportableColumns
+}) => {
+    const currentColumnMap = useMemo(() => propColumnMap || COLUMN_MAP, [propColumnMap]);
+    const currentExportableColumns = useMemo(() => propExportableColumns || EXPORTABLE_COLUMNS, [propExportableColumns]);
+    
+    const [selectedColumns, setSelectedColumns] = useState<string[]>([]);
+    
+    // Reset selection when the available columns change (e.g., switching report types)
+    useEffect(() => {
+        setSelectedColumns([]);
+    }, [currentExportableColumns]);
 
-    const handleToggleColumn = (columnKey: keyof StaffMember) => {
+    const handleToggleColumn = (columnKey: string) => {
         setSelectedColumns(prev => 
             prev.includes(columnKey) ? prev.filter(c => c !== columnKey) : [...prev, columnKey]
         );
     };
 
     const handleSelectAll = () => {
-        setSelectedColumns(EXPORTABLE_COLUMNS);
+        setSelectedColumns(currentExportableColumns);
     };
     
     const handleDeselectAll = () => {
@@ -69,8 +86,8 @@ const ExportOptionsModal: React.FC<ExportOptionsModalProps> = ({ isOpen, onClose
     };
 
     const sortedColumns = useMemo(() => {
-        return [...EXPORTABLE_COLUMNS].sort((a, b) => COLUMN_MAP[a].localeCompare(COLUMN_MAP[b]));
-    }, []);
+        return [...currentExportableColumns].sort((a, b) => currentColumnMap[a].localeCompare(currentColumnMap[b]));
+    }, [currentExportableColumns, currentColumnMap]);
 
     if (!isOpen) return null;
 
@@ -84,7 +101,7 @@ const ExportOptionsModal: React.FC<ExportOptionsModalProps> = ({ isOpen, onClose
                 
                 <div className="p-6 overflow-y-auto">
                     <div className="flex items-center justify-between mb-4">
-                        <span className="text-sm font-medium text-gray-700">{selectedColumns.length} of {EXPORTABLE_COLUMNS.length} selected</span>
+                        <span className="text-sm font-medium text-gray-700">{selectedColumns.length} of {currentExportableColumns.length} selected</span>
                         <div className="flex space-x-2">
                             <button onClick={handleSelectAll} className="px-3 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-md hover:bg-blue-200">Select All</button>
                             <button onClick={handleDeselectAll} className="px-3 py-1 text-xs font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200">Deselect All</button>
@@ -99,7 +116,7 @@ const ExportOptionsModal: React.FC<ExportOptionsModalProps> = ({ isOpen, onClose
                                     onChange={() => handleToggleColumn(columnKey)}
                                     className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                                 />
-                                <span className="text-sm text-gray-800 select-none">{COLUMN_MAP[columnKey]}</span>
+                                <span className="text-sm text-gray-800 select-none">{currentColumnMap[columnKey]}</span>
                             </label>
                         ))}
                     </div>
@@ -109,7 +126,7 @@ const ExportOptionsModal: React.FC<ExportOptionsModalProps> = ({ isOpen, onClose
                     <button type="button" onClick={onClose} className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50">Cancel</button>
                     <button 
                         type="button" 
-                        onClick={() => onExportPrint(selectedColumns, COLUMN_MAP)}
+                        onClick={() => onExportPrint(selectedColumns, currentColumnMap)}
                         disabled={selectedColumns.length === 0}
                         className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
                     >
@@ -117,7 +134,7 @@ const ExportOptionsModal: React.FC<ExportOptionsModalProps> = ({ isOpen, onClose
                     </button>
                      <button 
                         type="button" 
-                        onClick={() => onExportCSV(selectedColumns, COLUMN_MAP)}
+                        onClick={() => onExportCSV(selectedColumns, currentColumnMap)}
                         disabled={selectedColumns.length === 0}
                         className="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
                     >

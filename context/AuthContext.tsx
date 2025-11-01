@@ -35,15 +35,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             // Step 2: Fetch additional details from the ippd table like profile image and authorization status.
             const { data: staffProfile, error: staffError } = await supabase
                 .from('ippd')
-                .select('authorised, profile_image_url')
+                .select('authorised, profile_image_url, is_archived')
                 .eq('staff_id', userAccount.staffId)
                 .single();
             
             if (staffError) {
                 console.warn(`Could not fetch ippd profile for ${userAccount.staffId}:`, staffError);
-            } else {
-                userAccount.profile_image_url = staffProfile?.profile_image_url;
             }
+
+            if (staffProfile?.is_archived) {
+                throw new Error('This account has been archived and cannot be accessed.');
+            }
+
+            userAccount.profile_image_url = staffProfile?.profile_image_url;
 
             // Step 3: Determine authorization status based on role.
             if (userAccount.role === UserRole.Admin || userAccount.role === UserRole.Superadmin) {

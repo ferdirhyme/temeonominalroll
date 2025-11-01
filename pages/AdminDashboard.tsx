@@ -309,7 +309,11 @@ const AdminDashboard: React.FC = () => {
     }, [pendingStaff]);
 
     if (loading) {
-        return <div className="text-center p-8">Loading dashboard...</div>;
+        return (
+            <div className="flex items-center justify-center min-h-[50vh]">
+                <div className="w-16 h-16 border-4 border-blue-600 border-dashed rounded-full animate-spin"></div>
+            </div>
+        );
     }
     
     if (error) {
