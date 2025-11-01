@@ -3,17 +3,21 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "homepage": "https://ferdirhyme.github.io/tema-metro-staff-nominal-roll",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
   },
   "dependencies": {
+    "@heroicons/react": "^2.2.0",
+    "@supabase/supabase-js": "^2.45.0",
+    "gh-pages": "^6.3.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "react-router-dom": "^7.9.3",
-    "@heroicons/react": "^2.2.0",
-    "@supabase/supabase-js": "^2.45.0"
+    "react-router-dom": "^7.9.3"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
