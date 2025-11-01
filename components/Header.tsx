@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Bars3Icon, ArrowRightOnRectangleIcon, UserCircleIcon, ChevronDownIcon, KeyIcon } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
+import logo from '../src/assets/ges-logo.svg'; // import logo
 
 interface HeaderProps {
     toggleSidebar: () => void;
@@ -28,10 +29,14 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
     return (
         <header className="flex items-center justify-between p-4 bg-white shadow-md">
             <div className="flex items-center">
-                 <button onClick={toggleSidebar} className="text-gray-600 focus:outline-none lg:hidden">
+                <button onClick={toggleSidebar} className="text-gray-600 focus:outline-none lg:hidden">
                     <Bars3Icon className="h-6 w-6" />
                 </button>
-                <h1 className="text-xl font-semibold text-gray-800 ml-4">Tema Metro Staff Nominal Roll</h1>
+
+                {/* Logo */}
+                <img src={logo} alt="Logo" className="w-12 h-12 mr-4" />
+
+                <h1 className="text-xl font-semibold text-gray-800">Tema Metro Staff Nominal Roll</h1>
             </div>
 
             <div className="flex items-center space-x-4">
@@ -53,6 +58,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                         </div>
                         <ChevronDownIcon className={`h-5 w-5 text-gray-500 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
                     </button>
+
                     {isDropdownOpen && (
                         <div className="absolute right-0 mt-2 w-56 origin-top-right bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none z-10">
                             <div className="py-1">
