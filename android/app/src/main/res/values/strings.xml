@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Tmeo Nominal Roll</string>
+    <string name="title_activity_main">Tmeo Nominal Roll</string>
+    <string name="package_name">com.ferdIT.tmeonominal</string>
+    <string name="custom_url_scheme">com.ferdIT.tmeonominal</string>
+</resources>

@@ -34,7 +34,7 @@ const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                 </button>
 
                 {/* Logo */}
-                <img src={logo} alt="Logo" className="w-12 h-12 mr-4" />
+                {/* <img src={logo} alt="Logo" className="w-12 h-12 mr-4" /> */}
 
                 <h1 className="text-xl font-semibold text-gray-800">Tema Metro Staff Nominal Roll</h1>
             </div>

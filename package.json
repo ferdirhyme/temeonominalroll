@@ -4,7 +4,6 @@
   "version": "0.0.0",
   "type": "module",
   "homepage": "https://ferdirhyme.github.io/temeonominalroll",
-
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -13,6 +12,10 @@
     "deploy": "gh-pages -d dist"
   },
   "dependencies": {
+    "@capacitor/android": "^4.8.0",
+    "@capacitor/cli": "^4.8.0",
+    "@capacitor/core": "^4.8.0",
+    "@capacitor/ios": "^4.8.0",
     "@heroicons/react": "^2.2.0",
     "@supabase/supabase-js": "^2.45.0",
     "gh-pages": "^6.3.0",

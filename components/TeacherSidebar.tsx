@@ -3,6 +3,13 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { HomeIcon, UserCircleIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
+import logo from '../src/assets/ges-logo.svg';
+
+
+const Logo = () => (
+    <img src={logo} alt="Tema Metro Education Logo" className="h-16 w-16 rounded-full mb-2" />
+);
+
 interface TeacherSidebarProps {
     isOpen: boolean;
     setIsOpen: (isOpen: boolean) => void;
@@ -18,7 +25,7 @@ const TeacherSidebar: React.FC<TeacherSidebarProps> = ({ isOpen, setIsOpen }) =>
             <div className={`fixed inset-y-0 left-0 z-30 w-64 bg-blue-800 text-white transform ${isOpen ? 'translate-x-0' : '-translate-x-full'} transition-transform duration-300 ease-in-out lg:static lg:translate-x-0`}>
                 <div className="relative p-4 border-b border-blue-700">
                     <div className="flex flex-col items-center w-full pt-4 pb-2">
-                        <img src="/assets/ges-logo.svg" alt="GES Logo" className="h-16 w-16 rounded-full mb-2" />
+                        <Logo />
                         <h2 className="text-sm font-semibold text-center text-blue-100">Tema Metro Education Directorate</h2>
                     </div>
                     <button onClick={() => setIsOpen(false)} className="absolute top-4 right-4 text-white lg:hidden">

@@ -1,6 +1,6 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
-import { ArrowRightOnRectangleIcon, ClockIcon } from '@heroicons/react/24/outline';
+import { ArrowRightOnRectangleIcon, NoSymbolIcon } from '@heroicons/react/24/outline';
 
 const Unauthorized: React.FC = () => {
     const { user, logout } = useAuth();
@@ -21,16 +21,16 @@ const Unauthorized: React.FC = () => {
             </header>
             <main className="flex-1 flex items-center justify-center">
                 <div className="w-full max-w-lg p-8 text-center bg-white rounded-2xl shadow-xl">
-                    <ClockIcon className="mx-auto h-16 w-16 text-yellow-500" />
-                    <h2 className="mt-6 text-2xl font-bold text-gray-900">Account Pending Approval</h2>
+                    <NoSymbolIcon className="mx-auto h-16 w-16 text-red-500" />
+                    <h2 className="mt-6 text-2xl font-bold text-gray-900">Account Not Authorized</h2>
                     <p className="mt-4 text-gray-600">
-                        Hello, <strong>{user?.name}</strong>. Thank you for signing up.
+                        Hello, <strong>{user?.name}</strong>.
                     </p>
                     <p className="mt-2 text-gray-600">
-                        Your account is currently awaiting authorization from a school administrator. You will be able to access your dashboard once your account has been approved.
+                        Your account does not currently have permission to access the system. This may be because it is awaiting initial approval, or because access has been revoked by an administrator.
                     </p>
                     <p className="mt-4 text-sm text-gray-500">
-                        If you believe this is an error, please contact your headteacher.
+                        Please contact your headteacher for more information or assistance.
                     </p>
                 </div>
             </main>

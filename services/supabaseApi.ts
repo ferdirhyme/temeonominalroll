@@ -308,6 +308,22 @@ export const getStaffMemberMonthlyApproval = async (staffMemberId: string, month
     return data;
 };
 
+// New function for Teacher Approval History
+export const getStaffMemberApprovalHistory = async (staffMemberId: string): Promise<MonthlyApproval[]> => {
+    const { data, error } = await supabase
+        .from('monthly_approvals')
+        .select('*')
+        .eq('staff_member_id', staffMemberId)
+        .order('month_start_date', { ascending: false })
+        .limit(12); // Limit to last 12 months for performance
+
+    if (error) {
+        console.error("Error fetching staff member's approval history:", error.message || JSON.stringify(error));
+        throw new Error(getErrorMessage(error, "Failed to fetch approval history."));
+    }
+    return data || [];
+};
+
 
 export const setMonthlyApproval = async (
     staffMemberId: string,

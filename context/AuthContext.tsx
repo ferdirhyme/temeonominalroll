@@ -56,6 +56,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             } else if (userAccount.role === UserRole.Teacher) {
                 // For teachers, the 'authorised' status is in the 'ippd' table.
                  userAccount.authorised = staffProfile?.authorised ?? false;
+                 // If a teacher is not authorized, set a flag in localStorage. This allows the UI
+                 // to show a welcome message upon their first login after being approved.
+                 if (!userAccount.authorised) {
+                     localStorage.setItem(`user_status_${supabaseUser.id}`, 'pending');
+                 }
             } else {
                 // Default any other roles to unauthorized.
                 userAccount.authorised = false;
