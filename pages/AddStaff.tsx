@@ -1,6 +1,3 @@
-
-
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import * as api from '../services/supabaseApi';
@@ -246,6 +243,23 @@ const AddStaff: React.FC = () => {
                         {renderInputField('Date Obtained (Acad.)', 'date_obtained_acad', 'date')}
                         {renderInputField('Professional Qualification', 'prof_qual')}
                         {renderInputField('Date Obtained (Prof.)', 'date_obtained_prof', 'date')}
+                        <div>
+                            <label htmlFor="level" className="block text-sm font-medium text-gray-700">Level</label>
+                            <select
+                                id="level"
+                                name="level"
+                                value={formData.level || ''}
+                                onChange={handleChange}
+                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-gray-900 bg-white"
+                            >
+                                <option value="">Select Level</option>
+                                <option value="KG">KG</option>
+                                <option value="PRIMARY">PRIMARY</option>
+                                <option value="JHS">JHS</option>
+                                <option value="SHS">SHS</option>
+                            </select>
+                        </div>
+                        {renderInputField('Subject', 'subject')}
                     </div>
                 </fieldset>
 

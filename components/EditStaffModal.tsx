@@ -1,6 +1,3 @@
-
-
-
 import React, { useState, useEffect } from 'react';
 import { StaffMember } from '../types';
 import { RANKS } from '../utils/ranks';
@@ -183,12 +180,29 @@ const EditStaffModal: React.FC<EditStaffModalProps> = ({ isOpen, onClose, staffM
                     </fieldset>
                     
                      <fieldset className="border p-4 rounded-md">
-                        <legend className="text-sm font-medium text-blue-600 px-2">Qualifications</legend>
+                        <legend className="text-sm font-medium text-blue-600 px-2">Qualifications & Position</legend>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {renderInputField('Academic Qualification', 'acad_qual')}
                             {renderInputField('Date Obtained (Acad.)', 'date_obtained_acad', 'date')}
                             {renderInputField('Professional Qualification', 'prof_qual')}
                             {renderInputField('Date Obtained (Prof.)', 'date_obtained_prof', 'date')}
+                            <div>
+                                <label htmlFor="level-edit" className="block text-sm font-medium text-gray-700">Level</label>
+                                <select
+                                    id="level-edit"
+                                    name="level"
+                                    value={formData.level || ''}
+                                    onChange={handleChange}
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-gray-900 bg-white"
+                                >
+                                    <option value="">Select Level</option>
+                                    <option value="KG">KG</option>
+                                    <option value="PRIMARY">PRIMARY</option>
+                                    <option value="JHS">JHS</option>
+                                    <option value="SHS">SHS</option>
+                                </select>
+                            </div>
+                            {renderInputField('Subject Taught', 'subject')}
                         </div>
                     </fieldset>
 

@@ -19,7 +19,7 @@ const TeacherEditInfoModal: React.FC<TeacherEditInfoModalProps> = ({ isOpen, onC
 
     if (!isOpen || !staffMember) return null;
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value, type } = e.target;
         const isDate = type === 'date';
         setFormData(prev => ({ ...prev, [name]: isDate && !value ? undefined : value }));
@@ -122,8 +122,23 @@ const TeacherEditInfoModal: React.FC<TeacherEditInfoModalProps> = ({ isOpen, onC
                             {renderInputField('Date Obtained (Prof.)', 'date_obtained_prof', 'date')}
                         </div>
                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                             {renderInputField('Level', 'level')}
-                             {renderInputField('Subject Taught', 'subject')}
+                            <div>
+                                <label htmlFor="level" className="block text-sm font-medium text-gray-700">Level</label>
+                                <select
+                                    id="level"
+                                    name="level"
+                                    value={formData.level || ''}
+                                    onChange={handleChange}
+                                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-gray-900 bg-white"
+                                >
+                                    <option value="">Select Level</option>
+                                    <option value="KG">KG</option>
+                                    <option value="PRIMARY">PRIMARY</option>
+                                    <option value="JHS">JHS</option>
+                                    <option value="SHS">SHS</option>
+                                </select>
+                            </div>
+                            {renderInputField('Subject Taught', 'subject')}
                         </div>
                     </fieldset>
 
