@@ -3,9 +3,9 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { UserPlusIcon, IdentificationIcon, EnvelopeIcon, LockClosedIcon, BuildingOfficeIcon } from '@heroicons/react/24/outline';
-
+import logo from '../assets/ges-logo.svg';
 const Logo = () => (
-    <img src="/assets/ges-logo.svg" alt="Tema Metro Education Logo" className="mx-auto h-24 w-24 rounded-full" />
+    <img src={logo} alt="Tema Metro Education Logo" className="mx-auto h-24 w-24 rounded-full" />
 );
 
 const Signup: React.FC = () => {
